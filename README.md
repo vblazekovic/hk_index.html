@@ -30,3 +30,12 @@ Sustav omogućuje:
 
 ## 🧱 Struktura projekta
 
+## 🚀 Autor
+
+**Vedran Blažeković** – Hrvački klub Podravka, Koprivnica  
+📧 hsk-podravka@gmail.com
+
+---
+
+© 2025 Hrvački klub Podravka. Sva prava pridržana.
+
