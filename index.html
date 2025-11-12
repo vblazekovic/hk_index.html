@@ -2644,3 +2644,317 @@
     </script>
 </body>
 </html>
+            const tableBodyId = isVeteranSection ? 'veteransTableBody' : 'membersTableBody';
+            const targetTableBody = document.getElementById(tableBodyId);
+
+            if (!targetTableBody) return;
+
+            targetTableBody.innerHTML = list.map(m => {
+                const groupName = STATE.groups.find(g => g.id === m.group)?.name || 'N/A';
+                const medicalStatus = getMedicalStatusHTML(m.medicalValidUntil);
+                const isBday = isTodayBirthday(m.dob);
+                const bdayIcon = isBday ? `<span class="bday-icon">🎂</span>` : '';
+                
+                // Prikaz statusa dokumenata (pojednostavljeno)
+                let statusBadges = [];
+                const medicalDays = m.medicalValidUntil ? Math.floor((new Date(m.medicalValidUntil) - new Date()) / (1000 * 60 * 60 * 24)) : -1;
+                const categorizationDays = m.categorizationValidUntil ? Math.floor((new Date(m.categorizationValidUntil) - new Date()) / (1000 * 60 * 60 * 24)) : -1;
+                const contractDays = m.contractValidUntil ? Math.floor((new Date(m.contractValidUntil) - new Date()) / (1000 * 60 * 60 * 24)) : -1;
+
+                if (medicalDays < 0) statusBadges.push('<span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">LJEK-ISTEK</span>');
+                else if (medicalDays <= 30) statusBadges.push('<span class="bg-club-gold text-club-red text-xs font-bold px-2 py-1 rounded-full">LJEK-UPZ</span>');
+                
+                if (categorizationDays < 0) statusBadges.push('<span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">KAT-ISTEK</span>');
+                
+                if (contractDays < 0) statusBadges.push('<span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">UGOV-ISTEK</span>');
+
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center">
+                            ${bdayIcon} ${m.firstName} ${m.lastName}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${groupName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                             ${medicalStatus}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-1">
+                            ${statusBadges.join('') || '<span class="text-green-600 text-xs font-semibold">Dokumenti OK</span>'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button onclick="window.app.showMemberDetails('${m.id}')" class="text-blue-500 hover:text-blue-700 text-sm">Detalji</button>
+                            <button onclick="window.app.openMemberEditForm('${m.id}')" class="text-club-gold hover:text-yellow-700 text-sm">Izmjena</button>
+                            <button onclick="window.app.deleteMember('${m.id}')" class="text-red-500 hover:text-red-700 text-sm">Brisanje</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Nema aktivnih članova/veterana.</td></tr>`;
+        }
+
+        // --- Renderiranje Natjecanja (Dodano) ---
+        function renderCompetitionsList() {
+            const tableBody = document.getElementById('competitionsTableBody');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = STATE.competitions.map(c => {
+                const coaches = c.coaches?.map(cId => {
+                    const coach = STATE.coaches.find(t => t.id === cId);
+                    return coach ? `${coach.lastName}` : 'N/A';
+                }).join(', ') || 'Nema';
+                
+                const typeDisplay = c.type === 'OSTALO' ? c.otherType : c.type;
+                const dateDisplay = c.dateFrom === c.dateTo || !c.dateTo ? c.dateFrom : `${c.dateFrom} - ${c.dateTo}`;
+                
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${dateDisplay}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${typeDisplay}<br><span class="text-xs text-gray-400">${c.location} (${c.countryCode})</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.ageGroup} / ${c.style}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${coaches}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button onclick="window.app.showCompetitionDetails('${c.id}')" class="text-blue-500 hover:text-blue-700 text-sm">Detalji</button>
+                            <button onclick="window.app.editCompetition('${c.id}')" class="text-club-gold hover:text-yellow-700 text-sm">Izmjena</button>
+                            <button onclick="window.app.deleteCompetition('${c.id}')" class="text-red-500 hover:text-red-700 text-sm">Brisanje</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Nema unesenih natjecanja.</td></tr>`;
+        }
+        
+        // --- Renderiranje Članarina (Dodano) ---
+        function renderFeesList() {
+             const tableBody = document.getElementById('feesTableBody');
+             if (!tableBody) return;
+
+             // Grupiramo članarine po članu i datumu za jednostavan prikaz
+             const groupedFees = STATE.fees.map(f => {
+                const member = STATE.members.find(m => m.id === f.memberId);
+                const statusColor = f.status === 'PAID' ? 'bg-green-100 text-green-700' : (f.status === 'OVERDUE' ? 'bg-red-100 text-red-700' : 'bg-club-gold text-club-red');
+                const statusText = f.status === 'PAID' ? 'PLAĆENO' : (f.status === 'OVERDUE' ? 'DUGUJE' : 'NEPLAĆENO');
+
+                 return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${member ? `${member.firstName} ${member.lastName}` : 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${f.monthYear}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${f.amount} EUR</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">${statusText}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button onclick="window.app.showPaymentSlipModal('${f.id}')" class="text-blue-500 hover:text-blue-700 text-sm">Uplatnica</button>
+                            <button onclick="window.app.markFeeAsPaid('${f.id}')" class="text-green-500 hover:text-green-700 text-sm">Označi Plaćeno</button>
+                        </td>
+                    </tr>
+                `;
+             }).join('') || `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Nema unesenih članarina.</td></tr>`;
+             
+             tableBody.innerHTML = groupedFees;
+        }
+
+        // Dodana funkcija za označavanje plaćanja
+        window.app.markFeeAsPaid = async (feeId) => {
+            try {
+                const feeRef = doc(STATE.db, getPrivateCollectionPath('fees'), feeId);
+                await updateDoc(feeRef, { status: 'PAID', paidAt: serverTimestamp() });
+                showMessage('Članarina uspješno označena kao plaćena.');
+            } catch (error) {
+                console.error("Greška pri ažuriranju plaćanja:", error);
+                showMessage('Greška pri ažuriranju plaćanja.', 'error');
+            }
+        };
+
+        // --- Renderiranje Treninga (Dodano) ---
+        function renderTrainingsList() {
+            const tableBody = document.getElementById('trainingsTableBody');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = STATE.attendance.map(a => {
+                const groupName = STATE.groups.find(g => g.id === a.group)?.name || 'N/A';
+                const coaches = a.coaches?.map(cId => {
+                    const coach = STATE.coaches.find(t => t.id === cId);
+                    return coach ? `${coach.lastName}` : 'N/A';
+                }).join(', ') || 'Nema';
+                
+                // Izračunavanje trajanja (sati)
+                const startTime = a.timeFrom;
+                const endTime = a.timeTo;
+                let duration = 'N/A';
+                if (startTime && endTime) {
+                    const start = new Date(`2000/01/01 ${startTime}`);
+                    const end = new Date(`2000/01/01 ${endTime}`);
+                    let diffMs = end - start;
+                    if (diffMs < 0) diffMs += (24 * 60 * 60 * 1000); // Prelazak preko ponoći
+                    duration = (diffMs / (1000 * 60 * 60)).toFixed(1); // Sati
+                }
+                
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${a.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${groupName}<br><span class="text-xs text-gray-400">${a.location === 'OSTALO' ? a.otherLocation : a.location}</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${coaches}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${duration} h</td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Nema unesenih treninga.</td></tr>`;
+        }
+        
+        // --- Renderiranje Putnih Naloga (Dodano) ---
+        function renderTravelOrdersUI() {
+            const tableBody = document.getElementById('travelOrdersTableBody');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = STATE.manualTravelOrders.map(t => {
+                const coach = STATE.coaches.find(c => c.id === t.coachId);
+                const coachName = coach ? `${coach.firstName} ${coach.lastName}` : 'N/A';
+                const dateDisplay = t.dateFrom === t.dateTo || !t.dateTo ? t.dateFrom : `${t.dateFrom} - ${t.dateTo}`;
+                
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${t.id.substring(0, 8).toUpperCase()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${coachName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${t.purpose} (${t.destination})</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dateDisplay}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button onclick="window.app.showTravelOrderDetails('${t.id}')" class="text-blue-500 hover:text-blue-700 text-sm">Pregled</button>
+                            <button onclick="window.app.deleteTravelOrder('${t.id}')" class="text-red-500 hover:text-red-700 text-sm">Brisanje</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Nema unesenih putnih naloga.</td></tr>`;
+            
+            // Logika za prikaz/skrivanje KM polja u ručnom unosu
+             const manualTravelType = document.getElementById('manualTravelType');
+             const manualMileageFields = document.getElementById('manualMileageFields');
+             if (manualTravelType) {
+                 manualTravelType.onchange = () => {
+                     if (manualTravelType.value === 'SLUZBENO' || manualTravelType.value === 'OSOBNO') {
+                         manualMileageFields.style.display = 'grid';
+                     } else {
+                         manualMileageFields.style.display = 'none';
+                     }
+                 };
+             }
+        }
+
+
+        // --- Inicijalizacija i Autentikacija ---
+        async function initializeAppAndAuth() {
+            // Globalne varijable iz Canvas okruženja
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            if (!firebaseConfig || !firebaseConfig.apiKey) {
+                console.error("Firebase config is missing or invalid.");
+                return;
+            }
+
+            STATE.appId = appId;
+            
+            try {
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+                
+                STATE.db = db;
+                STATE.auth = auth;
+
+                // Koristimo sesijsku perzistenciju da se korisnik ne mora ponovno prijavljivati nakon osvježavanja
+                await setPersistence(auth, browserSessionPersistence);
+                
+                // Prijavljivanje korisnika: preferira se custom token, inače anonimna prijava
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Slušanje promjena stanja autentikacije
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        STATE.userId = user.uid;
+                        STATE.isAuthReady = true;
+                        
+                        // Sada kada smo prijavljeni, postavljamo Firestore listenere
+                        setupFirestoreListeners();
+                        console.log("Firebase Auth Ready. User ID:", user.uid);
+                    } else {
+                        STATE.userId = generateUUID(); // Fallback za neautentificiranog korisnika (iako bi Auth trebao raditi)
+                        STATE.isAuthReady = true; 
+                        console.log("Firebase Auth Ready (Anonymous or Fallback).");
+                    }
+                    
+                    // Postavljanje početne sekcije
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const initialSection = urlParams.get('section') || 'welcome';
+                    setSection(initialSection);
+                });
+
+            } catch (error) {
+                console.error("Greška pri inicijalizaciji Firebasea ili autentikaciji:", error);
+                showMessage('Greška pri spajanju na bazu podataka.', 'error');
+            }
+        }
+
+        // --- Inicijalizacija Aplikacije ---
+        window.addEventListener('load', initializeAppAndAuth);
+
+        // Izlaganje glavnih funkcija na window.app
+        // Uključivanje svih funkcija koje se pozivaju iz HTML-a
+        window.app.setSection = setSection;
+        window.app.showModal = showModal;
+        window.app.hideModal = hideModal;
+
+        window.app.saveClubInfo = saveClubInfo;
+        window.app.saveClubOfficials = saveClubOfficials;
+        window.app.exportClubInfoToPDF = exportClubInfoToPDF;
+        
+        window.app.saveCoach = saveCoach;
+        window.app.editCoach = editCoach;
+        window.app.deleteCoach = deleteCoach;
+        
+        window.app.saveGroup = saveGroup;
+        window.app.deleteGroup = deleteGroup;
+        
+        window.app.openMemberEditForm = openMemberEditForm;
+        window.app.saveMember = saveMember;
+        window.app.deleteMember = deleteMember;
+        window.app.downloadMemberTemplate = downloadMemberTemplate;
+        window.app.uploadMembersXLSX = uploadMembersXLSX;
+        window.app.showMemberDetails = showMemberDetails;
+        window.app.sendBirthdayWish = sendBirthdayWish;
+
+        window.app.saveCompetition = saveCompetition;
+        window.app.editCompetition = editCompetition;
+        window.app.deleteCompetition = deleteCompetition;
+        window.app.addCompetitorResultField = addCompetitorResultField; 
+
+        window.app.renderStatistics = renderStatistics; 
+
+        window.app.saveAttendance = saveAttendance; 
+        window.app.saveMemberAttendance = saveMemberAttendance; 
+        window.app.savePreparation = savePreparation; 
+
+        window.app.sendNotification = sendNotification; 
+
+        window.app.createMembershipFees = createMembershipFees; 
+        window.app.showPaymentSlipModal = showPaymentSlipModal; 
+        window.app.exportPaymentSlipToPDF = exportPaymentSlipToPDF; 
+        window.app.markFeeAsPaid = window.app.markFeeAsPaid;
+
+        window.app.showTravelOrderForm = showTravelOrderForm; 
+        window.app.saveManualTravelOrder = saveManualTravelOrder; 
+        window.app.deleteTravelOrder = deleteTravelOrder; 
+        window.app.showTravelOrderDetails = showTravelOrderDetails; 
+        window.app.exportTravelOrderToPDF = exportTravelOrderToPDF; 
+
+        window.app.parentLogin = parentLogin; 
+        window.app.parentUploadDocuments = parentUploadDocuments; 
+        
+        // Dodatne PDF funkcije (generiranje na zahtjev)
+        window.app.generateAccessionFormPDF = generateAccessionFormPDF;
+        window.app.generateConsentFormPDF = generateConsentFormPDF;
+
+    </script>
+</body>
+</html>
