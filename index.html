@@ -22,12 +22,15 @@
             --color-club-red: #cc0000; /* Crvena */
             --color-club-gold: #ffc107; /* Zlatna */
             --color-club-white: #ffffff; /* Bijela */
+            --color-club-dark-red: #a00000;
         }
         .bg-club-red { background-color: var(--color-club-red); }
         .text-club-red { color: var(--color-club-red); }
         .bg-club-gold { background-color: var(--color-club-gold); }
         .text-club-gold { color: var(--color-club-gold); }
         .border-club-red { border-color: var(--color-club-red); }
+        .bg-club-dark-red { background-color: var(--color-club-dark-red); }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
@@ -37,7 +40,7 @@
             min-height: calc(100vh - 80px); /* Iznad fiksne navigacije */
         }
         .sidebar-item:hover {
-            background-color: #a00000;
+            background-color: var(--color-club-dark-red);
         }
         /* Custom scrollbar za bolji estetski dojam */
         .custom-scroll::-webkit-scrollbar { width: 8px; }
@@ -61,6 +64,14 @@
             transform: rotate(-15deg) translateY(-2px);
             margin-right: 4px;
             font-size: 1.2em;
+        }
+        /* Stil za karticu trenera */
+        .coach-card {
+            transition: all 0.3s;
+        }
+        .coach-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(204, 0, 0, 0.1), 0 4px 6px -2px rgba(204, 0, 0, 0.05);
         }
     </style>
 </head>
@@ -364,9 +375,9 @@
                         </form>
                     </div>
 
-                    <div id="coachesListContainer" class="p-6 bg-white rounded-lg shadow mt-8">
-                        <h3 class="text-xl font-semibold mb-4 border-b pb-2">Lista Trenera</h3>
-                        <div id="coachesList" class="space-y-3">
+                    <div id="coachesListContainer" class="p-6 bg-white rounded-xl shadow mt-8">
+                        <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-club-red">Aktivni Treneri</h3>
+                        <div id="coachesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             <!-- Dinamički popis trenera -->
                         </div>
                     </div>
@@ -1143,17 +1154,17 @@
 
                 <!-- NOVI ODJELJAK: Roditeljski Portal (Prijava) -->
                 <section id="roditeljski_portal_login" class="content-section flex items-center justify-center p-6" style="min-height: calc(100vh - 80px);">
-                    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl text-center">
+                    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl text-center border-t-8 border-club-red">
                         <h2 class="text-3xl font-extrabold text-club-red mb-4">Roditeljski Portal</h2>
                         <p class="text-gray-600 mb-6">Prijava za roditelje/staratelje.</p>
                         <form id="parentLoginForm" onsubmit="event.preventDefault(); window.app.parentLogin()">
                             <div class="mb-4 text-left">
                                 <label class="block text-sm font-medium text-gray-700">Email Roditelja:</label>
-                                <input type="email" id="parentLoginEmail" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 border">
+                                <input type="email" id="parentLoginEmail" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 border focus:border-club-red focus:ring focus:ring-club-red focus:ring-opacity-50">
                             </div>
                             <div class="mb-6 text-left">
                                 <label class="block text-sm font-medium text-gray-700">OIB Djeteta (Člana Kluba):</label>
-                                <input type="text" id="parentLoginOIB" required maxlength="11" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 border">
+                                <input type="text" id="parentLoginOIB" required maxlength="11" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 border focus:border-club-red focus:ring focus:ring-club-red focus:ring-opacity-50">
                             </div>
                             <button type="submit" class="w-full bg-club-red hover:bg-red-700 text-club-gold font-bold py-3 px-4 rounded-lg shadow-md transition duration-200">
                                 PRIJAVA
@@ -1170,8 +1181,8 @@
                     <!-- Status i Dokumentacija -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                         <!-- Status Člana/Dokumentacija -->
-                        <div class="lg:col-span-1 p-6 bg-white rounded-xl shadow">
-                            <h3 class="text-xl font-semibold mb-4 border-b pb-2">Status i Liječnički</h3>
+                        <div class="lg:col-span-1 p-6 bg-white rounded-xl shadow border-t-4 border-club-gold">
+                            <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-club-red">Status i Liječnički</h3>
                             <div id="portalMedicalStatus" class="p-3 rounded-lg text-center font-bold mb-4 bg-gray-100">Učitavanje...</div>
                             <h4 class="font-bold text-club-red mb-2">Upload Dokumenata:</h4>
                             <form id="parentUploadForm" onsubmit="event.preventDefault(); window.app.parentUploadDocuments()">
@@ -1190,8 +1201,8 @@
                         </div>
 
                         <!-- Financije i Plaćanja -->
-                        <div class="lg:col-span-2 p-6 bg-white rounded-xl shadow">
-                            <h3 class="text-xl font-semibold mb-4 border-b pb-2">Dugovanja i Plaćanja</h3>
+                        <div class="lg:col-span-2 p-6 bg-white rounded-xl shadow border-t-4 border-club-gold">
+                            <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-club-red">Dugovanja i Plaćanja</h3>
                             <div id="portalFeesList" class="space-y-4">
                                 <p class="text-gray-500">Nema evidentiranih dugovanja.</p>
                             </div>
@@ -1199,18 +1210,18 @@
                     </div>
 
                     <!-- Rezultati i Prisustvo (Agregirani prikaz za roditelja) -->
-                    <div class="p-6 bg-white rounded-xl shadow mt-8">
-                        <h3 class="text-xl font-semibold mb-4 border-b pb-2">Rezultati Natjecanja i Prisustvo</h3>
+                    <div class="p-6 bg-white rounded-xl shadow mt-8 border-t-4 border-club-gold">
+                        <h3 class="text-xl font-semibold mb-4 border-b pb-2 text-club-red">Rezultati Natjecanja i Prisustvo</h3>
                         <div id="portalMemberStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
-                            <div class="p-4 bg-gray-100 rounded-lg shadow-sm">
+                            <div class="p-4 bg-red-50 rounded-lg shadow-sm">
                                 <p class="text-3xl font-bold text-club-red" id="statsTotalComps">0</p>
                                 <p class="text-sm font-medium text-gray-600">Natjecanja</p>
                             </div>
-                            <div class="p-4 bg-gray-100 rounded-lg shadow-sm">
+                            <div class="p-4 bg-red-50 rounded-lg shadow-sm">
                                 <p class="text-3xl font-bold text-club-red" id="statsTotalWins">0</p>
                                 <p class="text-sm font-medium text-gray-600">Pobjeda</p>
                             </div>
-                            <div class="p-4 bg-gray-100 rounded-lg shadow-sm">
+                            <div class="p-4 bg-red-50 rounded-lg shadow-sm">
                                 <p class="text-3xl font-bold text-club-red" id="statsTotalTrainings">0</p>
                                 <p class="text-sm font-medium text-gray-600">Odrađeni Treninzi</p>
                             </div>
@@ -1782,11 +1793,12 @@
                     await addDoc(collection(STATE.db, getPrivateCollectionPath('coaches')), data);
                     showMessage('Novi trener uspješno dodan.');
                 }
+                // Ovdje se form resetira nakon uspješnog spremanja (što je dio popravka greške)
                 document.getElementById('coachFormContainer').style.display = 'none';
                 form.reset();
             } catch (error) {
                 console.error("Greška pri spremanju trenera:", error);
-                showMessage('Greška pri spremanju trenera.', 'error');
+                showMessage('Greška pri spremanju trenera. Provjerite konzolu za detalje.', 'error');
             }
         }
 
@@ -1837,19 +1849,24 @@
             listDiv.innerHTML = STATE.coaches.map(c => {
                 const groups = STATE.groups.filter(g => g.coaches.includes(c.id)).map(g => g.name).join(', ') || 'Nema';
                 return `
-                    <div class="flex items-center justify-between p-3 border-b hover:bg-gray-100 rounded-lg">
-                        <div class="flex items-center space-x-3">
-                            <img src="${c.image || 'https://placehold.co/40x40/cc0000/ffffff?text=T'}" onerror="this.src='https://placehold.co/40x40/cc0000/ffffff?text=T'" class="h-10 w-10 rounded-full object-cover">
+                    <div class="coach-card bg-white p-4 rounded-xl shadow-md border-t-4 border-club-red flex flex-col space-y-3">
+                        <div class="flex items-center space-x-4">
+                            <img src="${c.image || 'https://placehold.co/60x60/ffc107/cc0000?text=T'}" onerror="this.src='https://placehold.co/60x60/ffc107/cc0000?text=T'" class="h-16 w-16 rounded-full object-cover border-2 border-club-gold shadow-md">
                             <div>
-                                <p class="font-semibold text-club-red">${c.firstName} ${c.lastName}</p>
-                                <p class="text-xs text-gray-500">Vodi grupe: ${groups}</p>
+                                <p class="font-black text-xl text-club-red">${c.firstName} ${c.lastName}</p>
+                                <p class="text-xs text-gray-600">
+                                    ${groups.length > 0 ? `Vodi: <span class="font-semibold text-club-dark-red">${groups}</span>` : 'Nema grupu'}
+                                </p>
                             </div>
                         </div>
-                        <div class="space-x-2">
-                            <a href="mailto:${c.email}" target="_blank" class="text-blue-500 hover:text-blue-700 text-sm">Email</a>
-                            <a href="https://wa.me/${c.phone}" target="_blank" class="text-green-500 hover:text-green-700 text-sm">WhatsApp</a>
-                            <button onclick="window.app.editCoach('${c.id}')" class="text-club-gold hover:text-yellow-700 text-sm">Izmjena</button>
-                            <button onclick="window.app.deleteCoach('${c.id}')" class="text-red-500 hover:text-red-700 text-sm">Brisanje</button>
+                        <div class="text-sm text-gray-700">
+                            <p><span class="font-semibold text-club-red">Kontakt:</span> ${c.phone || 'N/A'}</p>
+                            <p><span class="font-semibold text-club-red">Email:</span> ${c.email || 'N/A'}</p>
+                        </div>
+                        <div class="space-x-2 mt-2 pt-2 border-t text-right">
+                            <a href="mailto:${c.email}" target="_blank" class="text-blue-500 hover:text-blue-700 text-sm font-medium">Email</a>
+                            <button onclick="window.app.editCoach('${c.id}')" class="text-club-gold hover:text-yellow-700 text-sm font-medium">Izmjena</button>
+                            <button onclick="window.app.deleteCoach('${c.id}')" class="text-red-500 hover:text-red-700 text-sm font-medium">Brisanje</button>
                         </div>
                     </div>
                 `;
@@ -2311,7 +2328,8 @@
         // --- Renderiranje Članova (Dodano) ---
         function renderMembersList() {
             const isVeteranSection = STATE.currentSection === 'veterani';
-            const list = STATE.members.filter(m => m.veteran === isVeteranSection); // Filter based on section
+            // Ispravak logike filtriranja: m.veteran je boolean, pa usporedba mora biti s boolean vrijednosti isVeteranSection
+            const list = STATE.members.filter(m => !!m.veteran === isVeteranSection); 
             const tableBodyId = isVeteranSection ? 'veteransTableBody' : 'membersTableBody';
             const targetTableBody = document.getElementById(tableBodyId);
 
@@ -2623,9 +2641,6 @@
         window.app.generateAccessionFormPDF = generateAccessionFormPDF;
         window.app.generateConsentFormPDF = generateConsentFormPDF;
 
-    </script>
-</body>
-</html>
     </script>
 </body>
 </html>
