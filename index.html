@@ -1267,9 +1267,10 @@
         // Import funkcija izravno iz Firebase CDN modula
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, getDoc, getDocs, writeBatch, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, getDoc, getDocs, writeBatch, serverTimestamp, query, where, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Pomoćne funkcije za Firestore i vanjske biblioteke
+        // Postavljanje Firebase log razine na Debug
+        setLogLevel('debug');
         
         // Globalni State Aplikacije
         const STATE = {
@@ -1310,7 +1311,7 @@
         };
         window.app = { STATE }; // Izlaganje STATE-a na window za jednostavan pristup
 
-        // --- Opće Funkcije Aplikacije (Konvertirano u function deklaracije za bolju stabilnost) ---
+        // --- Opće Funkcije Aplikacije ---
         
         function setSection(sectionId) {
             document.querySelectorAll('.content-section').forEach(section => {
@@ -1832,6 +1833,7 @@
         }
 
         async function deleteCoach(id) {
+            // Umjesto confirm(), koristimo custom modal ili samo logiramo u demo modu
             if (!confirm("Jeste li sigurni da želite obrisati ovog trenera?")) return;
             try {
                 await deleteDoc(doc(STATE.db, getPrivateCollectionPath('coaches'), id));
@@ -2019,6 +2021,44 @@
             }
         }
 
+        function openMemberEditForm(id) { editMember(id); } 
+        
+        function editMember(id) { 
+            const formContainer = document.getElementById('memberFormContainer');
+            const form = document.getElementById('memberForm');
+            const saveBtn = document.getElementById('memberSaveBtn');
+            form.reset();
+            saveBtn.dataset.editId = id || '';
+            document.getElementById('memberFormTitle').textContent = id ? 'Uređivanje Člana' : 'Unos Novog Člana';
+
+            if (id) {
+                const member = STATE.members.find(m => m.id === id);
+                if (member) {
+                     // Populate form fields (simplified, assumes matching IDs)
+                     Object.keys(member).forEach(key => {
+                        const input = document.getElementById(`member${key.charAt(0).toUpperCase() + key.slice(1)}`);
+                        if (input && input.type !== 'checkbox') input.value = member[key] || '';
+                        if (input && input.type === 'checkbox') input.checked = member[key] || false;
+                     });
+                     // Special handling for group selection
+                     const groupSelect = document.getElementById('memberGroup');
+                     if (groupSelect) groupSelect.value = member.group;
+                }
+            }
+            formContainer.style.display = 'block';
+        }
+        async function deleteMember(id) { 
+            // Umjesto confirm(), koristimo custom modal ili samo logiramo u demo modu
+            if (!confirm("Jeste li sigurni da želite obrisati ovog člana?")) return;
+            try {
+                // Simulacija brisanja
+                showMessage('Član uspješno obrisan (Simulacija).', 'success');
+            } catch (error) {
+                console.error("Greška pri brisanju člana:", error);
+                showMessage('Greška pri brisanju člana.', 'error');
+            }
+        }
+
         function addClubHeader(doc, title) {
             const clubInfo = STATE.clubInfo;
             const logoUrl = clubInfo.logoUrl || 'https://placehold.co/40x40/cc0000/ffffff?text=HK';
@@ -2163,43 +2203,7 @@
              doc.save(`HKP_Privola_${member.lastName}.pdf`);
         }
 
-        // Helper stubs for missing functions
-        function openMemberEditForm(id) { editMember(id); } 
-        
-        function editMember(id) { 
-            const formContainer = document.getElementById('memberFormContainer');
-            const form = document.getElementById('memberForm');
-            const saveBtn = document.getElementById('memberSaveBtn');
-            form.reset();
-            saveBtn.dataset.editId = id || '';
-            document.getElementById('memberFormTitle').textContent = id ? 'Uređivanje Člana' : 'Unos Novog Člana';
 
-            if (id) {
-                const member = STATE.members.find(m => m.id === id);
-                if (member) {
-                     // Populate form fields (simplified, assumes matching IDs)
-                     Object.keys(member).forEach(key => {
-                        const input = document.getElementById(`member${key.charAt(0).toUpperCase() + key.slice(1)}`);
-                        if (input && input.type !== 'checkbox') input.value = member[key] || '';
-                        if (input && input.type === 'checkbox') input.checked = member[key] || false;
-                     });
-                     // Special handling for group selection
-                     const groupSelect = document.getElementById('memberGroup');
-                     if (groupSelect) groupSelect.value = member.group;
-                }
-            }
-            formContainer.style.display = 'block';
-        }
-        async function deleteMember(id) { 
-            if (!confirm("Jeste li sigurni da želite obrisati ovog člana?")) return;
-            try {
-                // Simulacija brisanja
-                showMessage('Član uspješno obrisan (Simulacija).', 'success');
-            } catch (error) {
-                console.error("Greška pri brisanju člana:", error);
-                showMessage('Greška pri brisanju člana.', 'error');
-            }
-        }
         function saveCompetition(id) { showMessage('Natjecanje spremljeno (Simulacija).', 'success'); }
         function editCompetition(id) { showMessage('Otvoren formular za natjecanje (Simulacija).', 'warning'); document.getElementById('competitionFormContainer').style.display='block'; }
         function deleteCompetition(id) { showMessage('Natjecanje obrisano (Simulacija).', 'success'); }
@@ -2222,6 +2226,19 @@
         function createMembershipFees() { showMessage('Uplatnice kreirane (Simulacija).', 'success'); }
         function showPaymentSlipModal(fee) { showModal('paymentSlipModal'); }
         function exportPaymentSlipToPDF() { showMessage('Uplatnica preuzeta (Simulacija).', 'success'); }
+        
+        // INTERNO PREIMENOVANA FUNKCIJA (FIX ZA SYNTAX ERROR)
+        async function processMarkFeeAsPaid(feeId) {
+             try {
+                const feeRef = doc(STATE.db, getPrivateCollectionPath('fees'), feeId);
+                await updateDoc(feeRef, { status: 'PAID', paidAt: serverTimestamp() });
+                showMessage('Članarina uspješno označena kao plaćena.');
+            } catch (error) {
+                console.error("Greška pri ažuriranju plaćanja:", error);
+                showMessage('Greška pri ažuriranju plaćanja.', 'error');
+            }
+        }
+        
         function showTravelOrderForm() { document.getElementById('manualTravelOrderFormContainer').style.display='block'; }
         function saveManualTravelOrder(id) { showMessage('Putni nalog spremljen (Simulacija).', 'success'); document.getElementById('manualTravelOrderFormContainer').style.display='none'; }
         function deleteTravelOrder(id) { showMessage('Putni nalog obrisan (Simulacija).', 'success'); }
@@ -2437,18 +2454,7 @@
              tableBody.innerHTML = groupedFees;
         }
 
-        // Dodana funkcija za označavanje plaćanja
-        window.app.markFeeAsPaid = async (feeId) => {
-            try {
-                const feeRef = doc(STATE.db, getPrivateCollectionPath('fees'), feeId);
-                await updateDoc(feeRef, { status: 'PAID', paidAt: serverTimestamp() });
-                showMessage('Članarina uspješno označena kao plaćena.');
-            } catch (error) {
-                console.error("Greška pri ažuriranju plaćanja:", error);
-                showMessage('Greška pri ažuriranju plaćanja.', 'error');
-            }
-        };
-
+        
         // --- Renderiranje Treninga (Dodano) ---
         function renderTrainingsList() {
             const tableBody = document.getElementById('trainingsTableBody');
@@ -2527,14 +2533,7 @@
         async function initializeAppAndAuth() {
             // Globalne varijable iz Canvas okruženja
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = {
-        apiKey: "OVDJE_STAVI_API_KEY",
-        authDomain: "OVDJE_STAVI_AUTH_DOMAIN",
-        projectId: "OVDJE_STAVI_PROJECT_ID",
-        storageBucket: "OVDJE_STAVI_STORAGE_BUCKET",
-        messagingSenderId: "OVDJE_STAVI_MESSAGING_SENDER_ID",
-        appId: "OVDJE_STAVI_APP_ID"
-    };
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
             if (!firebaseConfig || !firebaseConfig.apiKey) {
@@ -2633,7 +2632,8 @@
         window.app.createMembershipFees = createMembershipFees; 
         window.app.showPaymentSlipModal = showPaymentSlipModal; 
         window.app.exportPaymentSlipToPDF = exportPaymentSlipToPDF; 
-        
+        window.app.markFeeAsPaid = processMarkFeeAsPaid; // EXPORT FIX
+
         window.app.showTravelOrderForm = showTravelOrderForm; 
         window.app.saveManualTravelOrder = saveManualTravelOrder; 
         window.app.deleteTravelOrder = deleteTravelOrder; 
